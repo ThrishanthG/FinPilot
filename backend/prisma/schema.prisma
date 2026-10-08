@@ -1,0 +1,93 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                      String         @id @default(uuid())
+  name                    String
+  email                   String         @unique
+  passwordHash            String
+  emailVerified           Boolean        @default(false)
+  consentedToDisclaimer   Boolean        @default(false)
+  consentedAt             DateTime?
+  age                     Int?
+  occupation              String?
+  monthlyIncome           Float?
+  annualIncome            Float?
+  riskScore               Int?
+  experienceScore         Int?
+  financialLiteracyScore  Int?
+  role                    String         @default("USER")
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  assessments             Assessment[]
+  investments             Investment[]
+  goals                   Goal[]
+  refreshTokens           RefreshToken[]
+  auditLogs               AuditLog[]     @relation("AdminLogs")
+
+  @@index([email])
+}
+
+model Assessment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers   String
+  riskLevel String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Investment {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  investmentType String
+  amount         Float
+  date           DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Goal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalName      String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  targetDate    DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  admin     User     @relation("AdminLogs", fields: [adminId], references: [id])
+  action    String
+  details   String
+  ipAddress String
+  createdAt DateTime @default(now())
+}
